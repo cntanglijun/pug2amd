@@ -17,5 +17,18 @@
     "glob": "^7.0.5",
     "glob-watcher": "^3.0.0",
     "pug": "^2.0.0-beta4"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cntanglijun/pug2amd.git"
+  },
+  "keywords": [
+    "pug2amd",
+    "pug",
+    "amd"
+  ],
+  "bugs": {
+    "url": "https://github.com/cntanglijun/pug2amd/issues"
+  },
+  "homepage": "https://github.com/cntanglijun/pug2amd#readme"
 }
