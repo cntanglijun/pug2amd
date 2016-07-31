@@ -1,0 +1,110 @@
+#!/usr/bin/env node
+
+'use strict';
+
+const path = require('path');
+const fs = require('fs');
+const fse = require('fs-extra');
+const pug = require('pug');
+const program = require('commander');
+const glob = require('glob');
+const colors = require('colors');
+const watch = require('glob-watcher');
+const pkg = require('../package.json');
+
+const amdWrapper = 'define(function (require, exports, module) {[func] return tpl})';
+const log = console.log;
+
+program
+  .version(pkg.version)
+  .option('-f, --file <path>', '指定pug文件或者目录')
+  .option('-o, --out <directory>', '指定输出目录')
+  .option('    --nocompress', '不压缩代码')
+  .option('    --watch', '监视文件变动')
+  .parse(process.argv);
+
+/**
+ * 编译pug文件
+ * @param file {String}
+ * @private
+ */
+function _compile(file) {
+  if (path.extname(file) === '.pug' || path.extname(file) === '.jade') {
+    // 文件目录
+    let basedir = path.dirname(file).split(path.sep)[0];
+    // 输出目录
+    let outputDir = program.out ? path.dirname(file.replace(basedir, program.out)) :
+      path.resolve(path.dirname(file));
+    // 文件名
+    let basename = path.basename(file, path.extname(file));
+    // 编译后的字符串
+    let compiledStr = pug.compileFileClient(file, {
+      pretty: program.nocompress ? true : false,
+      debug: false,
+      compileDebug: false,
+      name: 'tpl'
+    });
+    // 编译后的文件名
+    let compiledFileName = path.join(outputDir, basename + '.js');
+    // 输出文件
+    fse.outputFile(compiledFileName, amdWrapper.replace('[func]', compiledStr), 'utf8');
+    // 终端提示信息
+    log('compiled: '.cyan + file + ' => ' + path.relative(process.cwd(), compiledFileName).magenta);
+  }
+}
+
+/**
+ * 格式化文件路径为glob
+ * @param file {String}
+ * @returns {String}
+ * @private
+ */
+function _formatToGlob(file) {
+
+  try {
+    const stat = fs.statSync(file);
+
+    if (stat.isDirectory()) {
+      file = path.join(file, '**/*');
+    }
+    return file;
+
+  } catch (ignore) {
+    return file;
+  }
+
+}
+
+if (program.file) {
+  glob(_formatToGlob(program.file), (er, files) => {
+    if (er) {
+      console.log(er);
+    } else {
+      if (files.length) {
+        files.forEach((file) => {
+          _compile(file);
+        });
+      } else {
+        log('没有可编译的文件哦!'.red);
+      }
+    }
+  });
+  // 启用监视
+  if (program.watch) {
+    // 终端提示
+    log(('Watching ' + program.file + '! Use `Ctrl + C` to stop!').yellow);
+    // 调用监视器
+    watch([_formatToGlob(program.file)])
+      .on('change', (file, stat) => {
+        _compile(file);
+      })
+      .on('add', (file, stat) => {
+        _compile(file);
+      });
+  }
+} else {
+  log([
+    'Nothing to do! You can use `p2a -h` to check usage',
+    '什么都没有发生! 请使用命令`p2a -h`查看用法'
+  ].join('\n').red);
+}

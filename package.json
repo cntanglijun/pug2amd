@@ -1,0 +1,21 @@
+{
+  "name": "pug2amd",
+  "version": "0.0.1-alpha",
+  "description": "pug模板编译成amd模块",
+  "bin": {
+    "p2a": "./bin/pug2amd"
+  },
+  "scripts": {
+    "test": ""
+  },
+  "author": "cntanglijun",
+  "license": "MIT",
+  "dependencies": {
+    "colors": "^1.1.2",
+    "commander": "^2.9.0",
+    "fs-extra": "^0.30.0",
+    "glob": "^7.0.5",
+    "glob-watcher": "^3.0.0",
+    "pug": "^2.0.0-beta4"
+  }
+}
