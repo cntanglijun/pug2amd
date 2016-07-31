@@ -1,7 +1,7 @@
 # pug2amd 0.0.1-alpha
+[![npm](https://img.shields.io/npm/v/pug2amd.svg?maxAge=2592000?style=flat-square)](https://www.npmjs.com/package/pug2amd)
+[![npm](https://img.shields.io/npm/dm/pug2amd.svg?maxAge=2592000?style=flat-square)](https://www.npmjs.com/package/pug2amd)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://raw.githubusercontent.com/cntanglijun/pug2amd/master/LICENSE)
-[![npm](https://img.shields.io/npm/v/pug2amd.svg?maxAge=2592000?style=flat-square)](https://www.npmjs.com/package/boruto)
-[![npm](https://img.shields.io/npm/dm/pug2amd.svg?maxAge=2592000?style=flat-square)](https://www.npmjs.com/package/boruto)
 
 pug模版编译成amd模块的工具
 
