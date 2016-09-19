@@ -1,22 +1,24 @@
 {
   "name": "pug2amd",
-  "version": "0.0.1-alpha",
+  "version": "0.0.2-alpha",
   "description": "pug模板编译成amd模块",
   "bin": {
-    "p2a": "./bin/pug2amd"
+    "pug2amd": "./bin/pug2amd"
   },
   "scripts": {
+    "compile-bin": "es62bin src/bin/pug2amd.es6 -o bin/pug2amd",
     "test": ""
   },
   "author": "cntanglijun",
   "license": "MIT",
   "dependencies": {
+    "babel-polyfill": "^6.13.0",
     "colors": "^1.1.2",
     "commander": "^2.9.0",
     "fs-extra": "^0.30.0",
-    "glob": "^7.0.5",
+    "glob": "^7.0.6",
     "glob-watcher": "^3.0.0",
-    "pug": "^2.0.0-beta4"
+    "pug": "^2.0.0-beta6"
   },
   "repository": {
     "type": "git",
@@ -30,5 +32,8 @@
   "bugs": {
     "url": "https://github.com/cntanglijun/pug2amd/issues"
   },
-  "homepage": "https://github.com/cntanglijun/pug2amd#readme"
+  "homepage": "https://github.com/cntanglijun/pug2amd#readme",
+  "devDependencies": {
+    "es62bin-cli": "0.0.6-alpha"
+  }
 }

@@ -1,110 +1,138 @@
 #!/usr/bin/env node
-
 'use strict';
 
-const path = require('path');
-const fs = require('fs');
-const fse = require('fs-extra');
-const pug = require('pug');
-const program = require('commander');
-const glob = require('glob');
-const colors = require('colors');
-const watch = require('glob-watcher');
-const pkg = require('../package.json');
+require('babel-polyfill');
 
-const amdWrapper = 'define(function (require, exports, module) {[func] return tpl})';
-const log = console.log;
+require('colors');
 
-program
-  .version(pkg.version)
-  .option('-f, --file <path>', '指定pug文件或者目录')
-  .option('-o, --out <directory>', '指定输出目录')
-  .option('    --nocompress', '不压缩代码')
-  .option('    --watch', '监视文件变动')
-  .parse(process.argv);
+var _path = require('path');
 
-/**
- * 编译pug文件
- * @param file {String}
- * @private
- */
-function _compile(file) {
-  if (path.extname(file) === '.pug' || path.extname(file) === '.jade') {
-    // 文件目录
-    let basedir = path.dirname(file).split(path.sep)[0];
-    // 输出目录
-    let outputDir = program.out ? path.dirname(file.replace(basedir, program.out)) :
-      path.resolve(path.dirname(file));
-    // 文件名
-    let basename = path.basename(file, path.extname(file));
-    // 编译后的字符串
-    let compiledStr = pug.compileFileClient(file, {
-      pretty: program.nocompress ? true : false,
+var _path2 = _interopRequireDefault(_path);
+
+var _fs = require('fs');
+
+var _fs2 = _interopRequireDefault(_fs);
+
+var _fsExtra = require('fs-extra');
+
+var _fsExtra2 = _interopRequireDefault(_fsExtra);
+
+var _pug = require('pug');
+
+var _pug2 = _interopRequireDefault(_pug);
+
+var _commander = require('commander');
+
+var _commander2 = _interopRequireDefault(_commander);
+
+var _glob = require('glob');
+
+var _glob2 = _interopRequireDefault(_glob);
+
+var _globWatcher = require('glob-watcher');
+
+var _globWatcher2 = _interopRequireDefault(_globWatcher);
+
+var _package = require('../package.json');
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var amdWrapper = 'define(function (require, exports, module) {[func] return tpl})';
+var log = console.log;
+
+var pugPath = void 0;
+
+_commander2.default.version(_package.version).usage('<path> [options]').arguments('<path>').option('-f, --out-file <path>', '输出文件到指定路径').option('-d, --out-dir <path>', '输出目录到指定目录').option('    --nocompress', '不压缩代码').option('-w, --watch', '监视文件变动').action(function (p) {
+  pugPath = p;
+  _isFile(p) ? _doFile(p) : _doDir(p);
+}).parse(process.argv);
+
+function _doFile(p) {
+  var ext = _path2.default.extname(p);
+  var basename = _path2.default.basename(p);
+
+  var output = _commander2.default.outFile || p.replace(ext, '.js');
+
+  if (!_path2.default.extname(output)) {
+    output = _path2.default.join(output, basename.replace(ext, '.js'));
+  }
+
+  if (_commander2.default.watch) {
+    (0, _globWatcher2.default)(p).on('change', function (p) {
+      _compile(p, output);
+    });
+
+    log(['正在监视 ' + p + '! `Ctrl + C` 停止!', 'Watching ' + p + '! Use `Ctrl + C` to stop!'].join('\n').yellow);
+  }
+
+  _compile(p, output);
+}
+
+function _doDir(p) {
+  var pattern = _path2.default.join(p, '**/*.pug');
+  var outDir = _commander2.default.outDir;
+
+  var formatOutputUrl = function formatOutputUrl(file) {
+    var output = void 0;
+
+    if (outDir && pugPath !== outDir) {
+      output = file.replace(pugPath, outDir).replace('pug', 'js');
+    } else {
+      output = file.replace('pug', 'js');
+    }
+
+    return output;
+  };
+
+  if (_commander2.default.watch) {
+    var handle = function handle(file) {
+      _compile(file, formatOutputUrl(file));
+    };
+
+    (0, _globWatcher2.default)(pattern).on('add', handle).on('change', handle);
+
+    log(['正在监视 ' + p + '! `Ctrl + C` 停止!', 'Watching ' + p + '! Use `Ctrl + C` to stop!'].join('\n').yellow);
+  }
+
+  (0, _glob2.default)(pattern, null, function (e, files) {
+    if (e) {
+      log(e.message.red);
+    } else {
+      files.forEach(function (file) {
+
+        _compile(file, formatOutputUrl(file));
+      });
+    }
+  });
+}
+
+function _isFile(file) {
+  try {
+    return _fs2.default.statSync(file).isFile();
+  } catch (e) {
+    log(e.message.red);
+  }
+}
+
+function _isPugFile(file) {
+  return _path2.default.extname(file) === '.pug';
+}
+
+function _compile(file, output) {
+  if (_isPugFile(file)) {
+    var compiledStr = _pug2.default.compileFileClient(file, {
+      pretty: !_commander2.default.nocompress,
       debug: false,
       compileDebug: false,
       name: 'tpl'
     });
-    // 编译后的文件名
-    let compiledFileName = path.join(outputDir, basename + '.js');
-    // 输出文件
-    fse.outputFile(compiledFileName, amdWrapper.replace('[func]', compiledStr), 'utf8');
-    // 终端提示信息
-    log('compiled: '.cyan + file + ' => ' + path.relative(process.cwd(), compiledFileName).magenta);
+
+    _fsExtra2.default.outputFileSync(output, amdWrapper.replace('[func]', compiledStr), 'utf8');
+
+    log(['compiled:'.cyan, file, '=>', _path2.default.relative(process.cwd(), output).magenta, new Date().toLocaleString()].join(' '));
   }
 }
 
-/**
- * 格式化文件路径为glob
- * @param file {String}
- * @returns {String}
- * @private
- */
-function _formatToGlob(file) {
-
-  try {
-    const stat = fs.statSync(file);
-
-    if (stat.isDirectory()) {
-      file = path.join(file, '**/*');
-    }
-    return file;
-
-  } catch (ignore) {
-    return file;
-  }
-
-}
-
-if (program.file) {
-  glob(_formatToGlob(program.file), (er, files) => {
-    if (er) {
-      console.log(er);
-    } else {
-      if (files.length) {
-        files.forEach((file) => {
-          _compile(file);
-        });
-      } else {
-        log('没有可编译的文件哦!'.red);
-      }
-    }
-  });
-  // 启用监视
-  if (program.watch) {
-    // 终端提示
-    log(('Watching ' + program.file + '! Use `Ctrl + C` to stop!').yellow);
-    // 调用监视器
-    watch([_formatToGlob(program.file)])
-      .on('change', (file, stat) => {
-        _compile(file);
-      })
-      .on('add', (file, stat) => {
-        _compile(file);
-      });
-  }
-} else {
-  log([
-    'Nothing to do! You can use `p2a -h` to check usage',
-    '什么都没有发生! 请使用命令`p2a -h`查看用法'
-  ].join('\n').red);
+if (!pugPath) {
+  log(['Nothing to do! You can use `p2a -h` to check usage', '什么都没有发生! 请使用命令`p2a -h`查看用法'].join('\n').yellow);
 }
